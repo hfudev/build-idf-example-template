@@ -1,0 +1,63 @@
+name: build-idf-example-ad-hoc.yml
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target to build"
+        required: true
+        default: "esp32"
+        type: string
+      idf_tag:
+        description: "IDF tag to use, please check the list of available tags at https://hub.docker.com/r/espressif/idf/tags"
+        required: true
+        default: "v5.1.2"
+        type: string
+      example_path:
+        description: "Path to example to build"
+        required: true
+        default: "examples/get-started/hello_world"
+        type: string
+      upload_whole_build_dir:
+        description: "Upload the whole build directory instead of a minimal set of binaires (bootloader, partition table, app binary, etc.)"
+        required: true
+        default: false
+        type: boolean
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: espressif/idf:${{ github.event.inputs.idf_tag }}
+    env:
+      IDF_PATH: /opt/esp/idf
+    steps:
+      - name: Prepare
+        run: |
+          cd ${{ env.IDF_PATH }}
+          bash install.sh
+      - name: Build
+        run: |
+          cd ${{ env.IDF_PATH }}
+          . ./export.sh
+          cd ${{ github.event.inputs.example_path }}
+          idf.py -DIDF_TARGET=${{ github.event.inputs.target }} build
+      - name: Upload minimum set of binaries
+        # https://github.com/actions/runner/issues/1483 boolean is actuall string
+        if: ${{ github.event.inputs.upload_whole_build_dir == 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-minimal
+          path: |
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/bootloader/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/partition_table/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flash_args
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flash_project_args
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flasher_args.json
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/config/sdkconfig.json
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/project_description.json
+      - name: Upload whole build directory
+        if: ${{ github.event.inputs.upload_whole_build_dir == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build
