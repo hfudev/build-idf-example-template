@@ -22,6 +22,12 @@ on:
         required: true
         default: false
         type: boolean
+      override_sdkconfig_items:   
+        description: "Override some of the sdkconfig items, comma-separated. for example, CONFIG_COMPILER_OPTIMIZATION_PERF=y,CONFIG_APP_BUILD_TYPE_RAM=y"
+        required: false
+        default: ""
+        type: string
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,11 +41,16 @@ jobs:
           cd ${{ env.IDF_PATH }}
           bash install.sh
       - name: Build
+        shell: bash
         run: |
           cd ${{ env.IDF_PATH }}
           . ./export.sh
-          cd ${{ github.event.inputs.example_path }}
-          idf.py -DIDF_TARGET=${{ github.event.inputs.target }} build
+          pip install 'idf-build-apps~=2.0'
+          if [[ ${{ github.event.inputs.override_sdkconfig_items }} ]]; then
+            idf-build-apps build -p ${{ github.event.inputs.example_path }} -t ${{ github.event.inputs.target }} --override-sdkconfig-items ${{ github.event.inputs.override_sdkconfig_items }}
+          else
+            idf-build-apps build -p ${{ github.event.inputs.example_path }} -t ${{ github.event.inputs.target }}
+          fi
       - name: Merge Bin
         run: |
           cd ${{ env.IDF_PATH }}
