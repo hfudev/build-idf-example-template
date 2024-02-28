@@ -17,6 +17,11 @@ on:
         required: true
         default: "examples/get-started/hello_world"
         type: string
+      build_dir:
+        description: "Path to build directory"
+        required: true
+        default: "build"
+        type: string
       upload_whole_build_dir:
         description: "Upload the whole build directory instead of a minimal set of binaires (bootloader, partition table, app binary, etc.)"
         required: true
@@ -47,15 +52,15 @@ jobs:
           . ./export.sh
           pip install 'idf-build-apps~=2.0'
           if [[ ${{ github.event.inputs.override_sdkconfig_items }} ]]; then
-            idf-build-apps build -p ${{ github.event.inputs.example_path }} -t ${{ github.event.inputs.target }} --override-sdkconfig-items ${{ github.event.inputs.override_sdkconfig_items }}
+            idf-build-apps build -p ${{ github.event.inputs.example_path }} --build-dir ${{ github.event.inputs.build_dir }} -t ${{ github.event.inputs.target }} --override-sdkconfig-items ${{ github.event.inputs.override_sdkconfig_items }}
           else
-            idf-build-apps build -p ${{ github.event.inputs.example_path }} -t ${{ github.event.inputs.target }}
+            idf-build-apps build -p ${{ github.event.inputs.example_path }} --build-dir ${{ github.event.inputs.build_dir }} -t ${{ github.event.inputs.target }}
           fi
       - name: Merge Bin
         run: |
           cd ${{ env.IDF_PATH }}
           . ./export.sh
-          cd ${{ github.event.inputs.example_path }}/build
+          cd ${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}
           python -m esptool --chip ${{ github.event.inputs.target }} merge_bin -o merged-flash.bin @flash_args
       - name: Upload minimum set of binaries
         # https://github.com/actions/runner/issues/1483 boolean is actuall string
@@ -64,18 +69,18 @@ jobs:
         with:
           name: build-minimal
           path: |
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/*.bin
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/bootloader/*.bin
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/partition_table/*.bin
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flash_args
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flash_project_args
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/flasher_args.json
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/config/sdkconfig.json
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/project_description.json
-            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build/merged-flash.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/bootloader/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/partition_table/*.bin
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/flash_args
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/flash_project_args
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/flasher_args.json
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/config/sdkconfig.json
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/project_description.json
+            ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}/merged-flash.bin
       - name: Upload whole build directory
         if: ${{ github.event.inputs.upload_whole_build_dir == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/build
+          path: ${{ env.IDF_PATH }}/${{ github.event.inputs.example_path }}/${{ github.event.inputs.build_dir }}
