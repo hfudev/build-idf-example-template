@@ -21,3 +21,13 @@ After a short while, the build will be triggered, and the new build will be disp
 After the build is done, you may download the artifacts manually.
 
 ![done](./docs/assets/done.png)
+
+## Tips
+
+### Use local `sdkconfig` file
+
+Since [`on.workflow_dispatch.inputs.<input_id>.type`](https://docs.github.com/en/enterprise-cloud@latest/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputsinput_idtype) does not support `file` type input, you may use the following command to print the content of the `sdkconfig` file, then copy and paste the content to the `override_sdkconfig_items` input.
+
+```bash
+grep -v '^#' [PATH_TO_YOUR_SDKCONFIG_FILE] | tr '\n' ',' | sed 's/,$//'
+```
