@@ -56,8 +56,8 @@ jobs:
           cd ${{ env.IDF_PATH }}
           . ./export.sh
           pip install 'idf-build-apps~=2.0'
-          if [[ ${{ github.event.inputs.override_sdkconfig_items }} ]]; then
-            idf-build-apps build -p ${{ github.event.inputs.example_path }} --build-dir ${{ github.event.inputs.build_dir }} -t ${{ github.event.inputs.target }} --override-sdkconfig-items '${{ github.event.inputs.override_sdkconfig_items }}'
+          if [[ "${{ github.event.inputs.override_sdkconfig_items }}" ]]; then
+            idf-build-apps build -p ${{ github.event.inputs.example_path }} --build-dir ${{ github.event.inputs.build_dir }} -t ${{ github.event.inputs.target }} --override-sdkconfig-items "${{ github.event.inputs.override_sdkconfig_items }}"
           else
             idf-build-apps build -p ${{ github.event.inputs.example_path }} --build-dir ${{ github.event.inputs.build_dir }} -t ${{ github.event.inputs.target }}
           fi
