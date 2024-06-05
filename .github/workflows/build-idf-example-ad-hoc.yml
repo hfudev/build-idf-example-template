@@ -10,7 +10,7 @@ on:
       idf_tag:
         description: "IDF tag to use, please check the list of available tags at https://hub.docker.com/r/espressif/idf/tags"
         required: true
-        default: "v5.1.2"
+        default: "v5.2.2"
         type: string
       example_path:
         description: "Path to example to build"
